@@ -123,60 +123,10 @@ end
 -- Set eventArgs.handled to true if we don't want any automatic gear equipping to be done.
 -- Set eventArgs.useMidcastGear to true if we want midcast gear equipped on precast.
 
-function job_filtered_action(spell, eventArgs)
-
-end
-
 function job_precast(spell, spellMap, eventArgs)
-
-	if spell.type == 'WeaponSkill' and state.AutoBuffMode.value ~= 'Off' and player.tp > (999 + step_cost()) then
-		local abil_recasts = windower.ffxi.get_ability_recasts()
-		if under3FMs() and abil_recasts[220] < latency and (abil_recasts[236] < latency or state.Buff['Presto']) and player.status == 'Engaged' then
-			eventArgs.cancel = true
-			windower.send_command('gs c step')
-			windower.chat.input:schedule(2.3,'/ws "'..spell.english..'" '..spell.target.raw..'')
-			tickdelay = os.clock() + 4.3
-			return
-		elseif not under3FMs() and not state.Buff['Building Flourish'] and abil_recasts[226] < latency then
-			eventArgs.cancel = true
-			windower.chat.input('/ja "Climactic Flourish" <me>')
-			windower.chat.input:schedule(1,'/ws "'..spell.english..'" '..spell.target.raw..'')
-			tickdelay = os.clock() + 1.25
-			return
-		elseif not under3FMs() and not state.Buff['Climactic Flourish'] and abil_recasts[222] < latency then
-			eventArgs.cancel = true
-			windower.chat.input('/ja "Building Flourish" <me>')
-			windower.chat.input:schedule(1,'/ws "'..spell.english..'" '..spell.target.raw..'')
-			tickdelay = os.clock() + 1.25
-			return
-		elseif player.sub_job == 'SAM' and player.tp > 1850 and abil_recasts[140] < latency then
-			eventArgs.cancel = true
-			windower.chat.input('/ja "Sekkanoki" <me>')
-			windower.chat.input:schedule(1,'/ws "'..spell.english..'" '..spell.target.raw..'')
-			tickdelay = os.clock() + 1.25
-			return
-		elseif player.sub_job == 'SAM' and abil_recasts[134] < latency then
-			eventArgs.cancel = true
-			windower.chat.input('/ja "Meditate" <me>')
-			windower.chat.input:schedule(1,'/ws "'..spell.english..'" '..spell.target.raw..'')
-			tickdelay = os.clock() + 1.25
-			return
-		end
-    elseif spell.type == 'Step' and player.main_job_level >= 77 and state.AutoPrestoMode.value and player.tp > 99 and player.status == 'Engaged' and under3FMs() then
-        local abil_recasts = windower.ffxi.get_ability_recasts()
-
-        if abil_recasts[236] < latency and abil_recasts[220] < latency then
-            eventArgs.cancel = true
-			windower.chat.input('/ja "Presto" <me>')
-			windower.chat.input:schedule(1.1,'/ja "'..spell.english..'" '..spell.target.raw..'')
-        end
-    end
-end
-
-function job_precast(spell, spellMap, eventArgs)
-local abil_recasts = windower.ffxi.get_ability_recasts()
-local target
-if not spell.target == nil and not spell.target.raw == nil then
+	local abil_recasts = windower.ffxi.get_ability_recasts()
+	local target
+	if not spell.target == nil and not spell.target.raw == nil then
 	target = (' ' .. spell.target.raw)
 	else
 		target = ' <bt>'
@@ -184,54 +134,53 @@ if not spell.target == nil and not spell.target.raw == nil then
 
 		if spell.type == 'Waltz' and state.Buff['Saber Dance'] and abil_recasts[spell.recast_id] < latency then
 			windower.packets.inject_outgoing(0xF1, string.char(0xF1, 0x04, 0, 0,
-															   410 % 256,
-													  math.floor(410 / 256),
-															   0, 0))
+															410 % 256,
+													math.floor(410 / 256),
+															0, 0))
 			windower.chat.input('//cancel "Saber Dance"')
 			return
 			elseif spell.type == 'WeaponSkill' then
 				local abilityused = false
 				if player.tp < 850 then
 					abilityused = tryUseAbility(abilityused, "<me>", 'Meditate', 1.25)
-					end
-					if abil_recasts[140] < latency and player.sub_job == 'SAM' and player.tp > 1850 then
-						eventArgs.cancel = true
-						abilityused = tryUseAbility(abilityused, "<me>", 'Sekkanoki', 1.4)
-						end
+				end
+				if abil_recasts[140] < latency and player.sub_job == 'SAM' and player.tp > 1850 then
+					eventArgs.cancel = true
+					abilityused = tryUseAbility(abilityused, "<me>", 'Sekkanoki', 1.4)
+				end
 
-						if string.trim(spell.name) == "Rudra's Storm" then
-							if under3FMs() and abil_recasts[223] < latency then
-								abilityused = tryUseAbility(abilityused, "<me>", 'No Foot Rise', 1)
-								end
-								end
+			if string.trim(spell.name) == "Rudra's Storm" then
+				if under3FMs() and abil_recasts[223] < latency then
+					abilityused = tryUseAbility(abilityused, "<me>", 'No Foot Rise', 1)
+				end
+			end
 
-								if not under3FMs() then
-									if abil_recasts[226] < latency and not state.Buff['Building Flourish'] then
-										eventArgs.cancel = true
-										abilityused = tryUseAbility(abilityused, "<me>", 'Climactic Flourish', 1.15)
-										elseif abil_recasts[222] < latency and not state.Buff['Climactic Flourish'] then
-											eventArgs.cancel = true
-											abilityused = tryUseAbility(abilityused, "<me>", 'Building Flourish', 1.15)
-											end
-											end
+		if not under3FMs() then
+			if abil_recasts[226] < latency and not state.Buff['Building Flourish'] then
+				eventArgs.cancel = true
+				abilityused = tryUseAbility(abilityused, "<me>", 'Climactic Flourish', 1.15)
+			elseif abil_recasts[222] < latency and not state.Buff['Climactic Flourish'] then
+				eventArgs.cancel = true
+				abilityused = tryUseAbility(abilityused, "<me>", 'Building Flourish', 1.15)
+				end
+			end
+			if abilityused == true and player.tp > 999 then
+				eventArgs.cancel = true
+				windower.chat.input:schedule(1.25, '/ws "' .. string.trim(spell.english) .. '"' .. target .. '')
+				tickdelay = os.clock() + 1.5
+			end
+		return
 
-											if abilityused == true and player.tp > 999 then
-												eventArgs.cancel = true
-												windower.chat.input:schedule(1.25, '/ws "' .. string.trim(spell.english) .. '"' .. target .. '')
-												tickdelay = os.clock() + 1.5
-												end
-												return
-
-												elseif spell.type == 'Step' and player.main_job_level >= 77 and player.tp > 99 and player.status == 'Engaged' and under3FMs() then
-													if abil_recasts[236] < latency then
-														eventArgs.cancel = true
-														windower.chat.input('/ja "Presto" <me>')
-														windower.chat.input:schedule(1.25, '/ja "' .. string.trim(spell.english) .. '"' .. target .. '')
-														tickdelay = os.clock() + 1.5
-														end
-														return
-														end
-														end
+		elseif spell.type == 'Step' and player.main_job_level >= 77 and player.tp > 99 and player.status == 'Engaged' and under3FMs() then
+			if abil_recasts[236] < latency then
+				eventArgs.cancel = true
+				windower.chat.input('/ja "Presto" <me>')
+				windower.chat.input:schedule(1.25, '/ja "' .. string.trim(spell.english) .. '"' .. target .. '')
+				tickdelay = os.clock() + 1.5
+			end
+			return
+	end
+end
 
 
 -- Return true if we handled the aftercast work.  Otherwise it will fall back
